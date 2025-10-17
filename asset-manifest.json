@@ -1,0 +1,17 @@
+{
+  "files": {
+    "main.css": "/web-integrador-crono-master-2/static/css/main.f29844c5.css",
+    "main.js": "/web-integrador-crono-master-2/static/js/main.aa0adea1.js",
+    "static/js/453.437477d3.chunk.js": "/web-integrador-crono-master-2/static/js/453.437477d3.chunk.js",
+    "static/media/bootstrap-icons.woff?": "/web-integrador-crono-master-2/static/media/bootstrap-icons.1295669cd4e305c97f2c.woff",
+    "static/media/bootstrap-icons.woff2?": "/web-integrador-crono-master-2/static/media/bootstrap-icons.92ea18a81d737146ff04.woff2",
+    "index.html": "/web-integrador-crono-master-2/index.html",
+    "main.f29844c5.css.map": "/web-integrador-crono-master-2/static/css/main.f29844c5.css.map",
+    "main.aa0adea1.js.map": "/web-integrador-crono-master-2/static/js/main.aa0adea1.js.map",
+    "453.437477d3.chunk.js.map": "/web-integrador-crono-master-2/static/js/453.437477d3.chunk.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.f29844c5.css",
+    "static/js/main.aa0adea1.js"
+  ]
+}
