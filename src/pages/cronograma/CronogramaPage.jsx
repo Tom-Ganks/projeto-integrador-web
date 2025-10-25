@@ -518,6 +518,67 @@ const CronogramaPage = ({ onNavigateHome }) => {
         />
       )}
 
+      {showConflitoDialog && aulaConflitante && (
+        <div
+          className="dialog-overlay"
+          onClick={() => setShowConflitoDialog(false)}
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            background: 'rgba(0,0,0,0.45)',
+            zIndex: 999999
+          }}
+        >
+          <div
+            className="dialog-content"
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              zIndex: 1000000,
+              maxWidth: 560,
+              width: '90%',
+              padding: 20,
+              borderRadius: 10,
+              background: '#fff',
+              boxShadow: '0 8px 24px rgba(0,0,0,0.2)'
+            }}
+          >
+            <h2 style={{ marginTop: 0, color: '#20b2aa' }}>Limite de horas excedido</h2>
+            <p>
+              O período já possui uma aula da mesma turma já agendada: <strong>{aulaConflitante.unidades_curriculares?.nomeuc}</strong> ({aulaConflitante.horas}h).
+            </p>
+            <p>
+              O total de horas desse período não pode ultrapassar o limite de {aulaConflitante.horario === '19:00-22:00' ? 3 : 4}h.
+            </p>
+            <p>Deseja editar a aula existente para liberar parte do horário?</p>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 18 }}>
+              <button
+                className="btn-secondary"
+                onClick={() => setShowConflitoDialog(false)}
+              >
+                Cancelar
+              </button>
+              <button
+                className="btn-primary"
+                onClick={() => {
+                  setShowConflitoDialog(false);
+                  setAulaToEdit(aulaConflitante);
+                  setShowEditDialog(true);
+                }}
+              >
+                Editar Aula Existente
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+
       {showAdicionarAulaDialog && (
         <AdicionarAulaDialog
           selectedDays={selectedDays.size > 0 ? selectedDays : new Set([selectedDay])}
@@ -629,7 +690,7 @@ const EditAulaForm = ({ aula, onSubmit, onCancel }) => {
           className="form-select"
         >
           <option value="08:00-12:00">Matutino (08:00-12:00)</option>
-          <option value="14:00-18:00">Vespertino (14:00-18:00)</option>
+          <option value="14:00-18:00">Vespertino (13:00-17:00)</option>
           <option value="19:00-22:00">Noturno (19:00-22:00)</option>
         </select>
       </div>

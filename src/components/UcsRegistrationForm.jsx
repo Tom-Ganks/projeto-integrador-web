@@ -18,13 +18,31 @@ const UcsRegistrationForm = ({ cursos = [], onSubmit, initialData = null, onCanc
       setFormData({
         nomeuc: initialData.nomeuc || '',
         cargahoraria: initialData.cargahoraria?.toString() || '',
-        idcurso: initialData.idcurso?.toString() || ''
+        courseName: initialData?.cursos?.nomecurso || '',
+        idcurso: initialData?.idcurso?.toString() || ''
       });
+    } else {
+      // Quando não está editando, mantemos o campo de curso vazio
+      setFormData(prev => ({ ...prev, idcurso: '', courseName: '' }));
     }
   }, [initialData]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
+
+    // se o usuário digitar no campo de courseName, limpamos o idcurso
+    if (name === 'courseName') {
+      setFormData(prev => ({
+        ...prev,
+        courseName: value,
+        idcurso: '' // será resolvido na validação/submit
+      }));
+      if (errors.courseName) {
+        setErrors(prev => ({ ...prev, courseName: '' }));
+      }
+      return;
+    }
+
     setFormData(prev => ({
       ...prev,
       [name]: value
@@ -51,21 +69,35 @@ const UcsRegistrationForm = ({ cursos = [], onSubmit, initialData = null, onCanc
       newErrors.cargahoraria = 'Carga horária é obrigatória';
     } else {
       const cargaHorariaNum = parseInt(formData.cargahoraria);
-      if (cargaHorariaNum < 1 || cargaHorariaNum > 2000) {
+      if (isNaN(cargaHorariaNum) || cargaHorariaNum < 1 || cargaHorariaNum > 2000) {
         newErrors.cargahoraria = 'Carga horária deve estar entre 1 e 2000 horas';
       }
     }
 
-    if (!formData.idcurso) {
-      newErrors.idcurso = 'Curso é obrigatório';
+    // validar courseName e resolver para idcurso
+    if (!formData.courseName || !formData.courseName.trim()) {
+      newErrors.courseName = 'Curso é obrigatório';
+    } else {
+      // procurar curso pelo nome exato (case-insensitive)
+      const match = cursos.find(c =>
+        String(c.nomecurso).toLowerCase() === String(formData.courseName).toLowerCase()
+      );
+      if (!match) {
+        newErrors.courseName = 'Curso não encontrado. Selecione um curso da lista.';
+      } else {
+        // preencher idcurso com o id do match (string)
+        setFormData(prev => ({ ...prev, idcurso: String(match.idcurso) }));
+      }
     }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    // validação (vai também resolver idcurso)
     if (!validateForm()) {
       setSubmitMessage({
         type: 'error',
@@ -77,16 +109,23 @@ const UcsRegistrationForm = ({ cursos = [], onSubmit, initialData = null, onCanc
     setIsSubmitting(true);
     setSubmitMessage({ type: '', text: '' });
 
-
     try {
-      // Converter para números antes de enviar
+      // Encontrar o idcurso final (já tentamos resolver na validação, mas reforçamos)
+      const matchedCurso = cursos.find(c =>
+        String(c.nomecurso).toLowerCase() === String(formData.courseName).toLowerCase()
+      );
+      if (!matchedCurso) {
+        throw new Error('Curso selecionado inválido');
+      }
+
       const dataToSubmit = {
         nomeuc: formData.nomeuc,
-         cargahoraria: parseInt(formData.cargahoraria),
-         idcurso: parseInt(formData.idcurso) 
+        cargahoraria: parseInt(formData.cargahoraria),
+        idcurso: parseInt(matchedCurso.idcurso)
       };
 
       await onSubmit(dataToSubmit);
+
       setSubmitMessage({
         type: 'success',
         text: initialData ? 'Unidade Curricular atualizada com sucesso!' : 'Unidade Curricular registrada com sucesso!'
@@ -108,6 +147,7 @@ const UcsRegistrationForm = ({ cursos = [], onSubmit, initialData = null, onCanc
     setFormData({
       nomeuc: '',
       cargahoraria: '',
+      courseName: '',
       idcurso: ''
     });
     setErrors({});
@@ -156,29 +196,100 @@ const UcsRegistrationForm = ({ cursos = [], onSubmit, initialData = null, onCanc
           )}
         </div>
 
-        <div className="form-group">
-          <label htmlFor="idcurso" className="form-label">
+        {/* Campo de Curso: híbrido (select + busca) */}
+        <div className="form-group" style={{ position: 'relative' }}>
+          <label htmlFor="courseName" className="form-label">
             <GraduationCap size={16} />
             Curso
           </label>
-          <select
-            className={`form-select ${errors.idcurso ? 'error' : ''}`}
-            id="idcurso"
-            name="idcurso"
-            value={formData.idcurso}
-            onChange={handleChange}
-          >
-            <option value="">Selecione um curso</option>
-            {cursos.map(curso => (
-              <option key={curso.idcurso} value={curso.idcurso}>
-                {curso.nomecurso}
-              </option>
-            ))}
-          </select>
-          {errors.idcurso && (
-            <div className="error-message">{errors.idcurso}</div>
+
+          <div style={{ position: 'relative' }}>
+            <input
+              type="text"
+              id="courseName"
+              name="courseName"
+              className={`form-input ${errors.courseName ? 'error' : ''}`}
+              placeholder="Digite ou selecione um curso"
+              value={formData.courseName}
+              onChange={(e) => {
+                handleChange(e);
+                setShowOptions(true);
+              }}
+              onFocus={() => setShowOptions(true)}
+              autoComplete="off"
+              style={{ paddingRight: '30px' }}
+            />
+            {/* “Flechinha” visual */}
+            <div
+              onClick={() => setShowOptions(!showOptions)}
+              style={{
+                position: 'absolute',
+                right: '8px',
+                top: '50%',
+                transform: 'translateY(-50%)',
+                cursor: 'pointer',
+                fontSize: '14px',
+                color: '#555'
+              }}
+            >
+              ▼
+            </div>
+
+            {/* Lista suspensa filtrada */}
+            {showOptions && (
+              <ul
+                style={{
+                  position: 'absolute',
+                  zIndex: 10,
+                  background: '#fff',
+                  border: '1px solid #ccc',
+                  width: '100%',
+                  maxHeight: '180px',
+                  overflowY: 'auto',
+                  borderRadius: '6px',
+                  marginTop: '4px',
+                  listStyle: 'none',
+                  padding: 0,
+                }}
+              >
+                {cursos
+                  .filter(c =>
+                    c.nomecurso
+                      .toLowerCase()
+                      .startsWith(formData.courseName.toLowerCase())
+                  )
+                  .map((curso) => (
+                    <li
+                      key={curso.idcurso}
+                      onClick={() => {
+                        setFormData(prev => ({
+                          ...prev,
+                          courseName: curso.nomecurso,
+                          idcurso: curso.idcurso.toString()
+                        }));
+                        setShowOptions(false);
+                      }}
+                      style={{
+                        padding: '6px 10px',
+                        cursor: 'pointer',
+                        borderBottom: '1px solid #eee',
+                        background:
+                          curso.nomecurso === formData.courseName ? '#f0f0f0' : 'white',
+                      }}
+                      onMouseDown={(e) => e.preventDefault()} // evita perder foco ao clicar
+                    >
+                      {curso.nomecurso}
+                    </li>
+                  ))}
+              </ul>
+            )}
+          </div>
+
+          {errors.courseName && (
+            <div className="error-message">{errors.courseName}</div>
           )}
         </div>
+
 
         <div className="form-actions">
           {onCancel && (
