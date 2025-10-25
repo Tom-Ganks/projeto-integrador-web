@@ -1,17 +1,30 @@
+// UcsRegistrationForm.jsx
 import React, { useEffect, useState } from 'react';
 import { BookOpen, Clock, GraduationCap } from 'lucide-react';
-
 
 const UcsRegistrationForm = ({ cursos = [], onSubmit, initialData = null, onCancel = null }) => {
   const [formData, setFormData] = useState({
     nomeuc: initialData?.nomeuc || '',
     cargahoraria: initialData?.cargahoraria?.toString() || '',
+    // agora guardamos o nome do curso visível e também o id (idcurso pode vir do initialData)
+    courseName: initialData?.cursos?.nomecurso || '',
     idcurso: initialData?.idcurso?.toString() || ''
   });
 
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitMessage, setSubmitMessage] = useState({ type: '', text: '' });
+  const [showOptions, setShowOptions] = useState(false);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (!event.target.closest('.form-group')) {
+        setShowOptions(false);
+      }
+    };
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, []);
 
   useEffect(() => {
     if (initialData) {
@@ -130,6 +143,7 @@ const UcsRegistrationForm = ({ cursos = [], onSubmit, initialData = null, onCanc
         type: 'success',
         text: initialData ? 'Unidade Curricular atualizada com sucesso!' : 'Unidade Curricular registrada com sucesso!'
       });
+
       if (!initialData) {
         clearForm();
       }
