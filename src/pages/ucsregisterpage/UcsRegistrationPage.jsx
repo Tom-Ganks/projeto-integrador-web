@@ -37,9 +37,9 @@ const UCSRegistrationPage = ({ onNavigateHome }) => {
     try {
       const { data, error } = await supabaseClient
         .from('unidades_curriculares')
-        .select('iduc, nomeuc, cargahoraria, cursos(nomecurso)')
-        .order('nomeuc');
-
+        .select('iduc, nomeuc, cargahoraria, idcurso, cursos(nomecurso)')
+        .order('iduc', { ascending: false });
+        
       if (error) throw error;
       setUcs(data || []);
     } catch (error) {

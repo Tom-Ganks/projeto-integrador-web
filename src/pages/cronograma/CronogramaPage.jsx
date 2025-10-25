@@ -755,7 +755,7 @@ const EditAulaForm = ({ aula, onSubmit, onCancel }) => {
           className="form-select"
         >
           <option value="08:00-12:00">Matutino (08:00-12:00)</option>
-          <option value="14:00-18:00">Vespertino (14:00-18:00)</option>
+          <option value="14:00-18:00">Vespertino (13:00-17:00)</option>
           <option value="19:00-22:00">Noturno (19:00-22:00)</option>
         </select>
       </div>
