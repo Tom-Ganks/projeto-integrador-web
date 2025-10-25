@@ -22,6 +22,9 @@ const CronogramaPage = ({ onNavigateHome }) => {
   const [aulaToDelete, setAulaToDelete] = useState(null);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [aulaToEdit, setAulaToEdit] = useState(null);
+  const [showConflitoDialog, setShowConflitoDialog] = useState(false);
+  const [aulaConflitante, setAulaConflitante] = useState(null);
+  const [novaAulaTentada, setNovaAulaTentada] = useState(null);
 
   const monthNames = [
     'JANEIRO', 'FEVEREIRO', 'MARÇO', 'ABRIL', 'MAIO', 'JUNHO',
@@ -211,35 +214,78 @@ const CronogramaPage = ({ onNavigateHome }) => {
   const handleAdicionarAula = async (aulaData) => {
     try {
       const aulasParaInserir = Array.from(aulaData.dias)
+        .map(d => new Date(d)) // <-- corrige o erro do Ctrl
         .filter(day => {
-          // Evita domingos e feriados
           const isSunday = day.getDay() === 0;
           const dateKey = `${day.getFullYear()}-${day.getMonth()}-${day.getDate()}`;
           const isFeriadoDia = feriadosNacionais[dateKey] || feriadosMunicipais[dateKey];
-
-          if (isSunday || isFeriadoDia) {
-            console.warn(`Dia ${day.toLocaleDateString('pt-BR')} ignorado (domingo/feriado)`);
-            return false;
-          }
+          if (isSunday || isFeriadoDia) return false;
           return true;
-        })
-        .map(day => ({
-          iduc: aulaData.iduc,
-          idturma: aulaData.idturma,
-          data: day.toISOString().split('T')[0],
-          horario: aulaData.horario,
-          status: 'Agendada',
-          horas: aulaData.horas
-        }));
+        });
 
       if (aulasParaInserir.length === 0) {
         alert('Não é possível agendar aulas apenas em domingos ou feriados.');
         return;
       }
+      // Verifica se já existe aula no mesmo dia/horário e calcula horas usadas
+      const verificacoes = await Promise.all(
+        aulasParaInserir.map(async (day) => {
+          const dataStr = day.toISOString().split('T')[0];
+
+          const { data: aulasExistentes } = await supabaseClient
+            .from('aulas')
+            .select('idaula, horas, horario, iduc, unidades_curriculares(nomeuc)')
+            .eq('idturma', aulaData.idturma)
+            .eq('data', dataStr)
+            .eq('horario', aulaData.horario);
+
+          // Calcula carga total já usada nesse período
+          const horasExistentes = aulasExistentes?.reduce((sum, a) => sum + (a.horas || 0), 0) || 0;
+
+          // Define limite por turno
+          const limiteHoras =
+            aulaData.horario === '19:00-22:00' ? 3 : 4;
+
+          // Soma das horas existentes + as novas
+          const totalHoras = horasExistentes + aulaData.horas;
+
+          // Verifica se ultrapassa o limite
+          const ultrapassa = totalHoras > limiteHoras;
+
+          return {
+            data: dataStr,
+            aulasExistentes,
+            horasExistentes,
+            limiteHoras,
+            ultrapassa
+          };
+        })
+      );
+
+      // Se alguma ultrapassar o limite → abre pop-up com opção de editar
+      const conflitos = verificacoes.filter(v => v.ultrapassa);
+
+      if (conflitos.length > 0) {
+        const conflito = conflitos[0];
+        const aulaConflitante = conflito.aulasExistentes[0];
+
+        setAulaConflitante(aulaConflitante);
+        setShowConflitoDialog(true);
+        return;
+      }
+
+      const aulasParaSalvar = aulasParaInserir.map(day => ({
+        iduc: aulaData.iduc,
+        idturma: aulaData.idturma,
+        data: day.toISOString().split('T')[0],
+        horario: aulaData.horario,
+        status: 'Agendada',
+        horas: aulaData.horas
+      }));
 
       const { error } = await supabaseClient
         .from('aulas')
-        .insert(aulasParaInserir);
+        .insert(aulasParaSalvar);
 
       if (error) throw error;
 
@@ -288,6 +334,7 @@ const CronogramaPage = ({ onNavigateHome }) => {
     if (!aulaToEdit) return;
 
     try {
+      // Atualiza a aula
       const { error } = await supabaseClient
         .from('aulas')
         .update({
@@ -299,6 +346,23 @@ const CronogramaPage = ({ onNavigateHome }) => {
 
       if (error) throw error;
 
+      // Se a aula for marcada como "Realizada", subtrai as horas da UC
+      if (formData.status === 'Realizada') {
+        const { data: ucAtual } = await supabaseClient
+          .from('unidades_curriculares')
+          .select('cargahoraria')
+          .eq('iduc', aulaToEdit.iduc)
+          .single();
+
+        if (ucAtual && ucAtual.cargahoraria > 0) {
+          const novaCarga = Math.max(ucAtual.cargahoraria - formData.horas, 0);
+          await supabaseClient
+            .from('unidades_curriculares')
+            .update({ cargahoraria: novaCarga })
+            .eq('iduc', aulaToEdit.iduc);
+        }
+      }
+
       await loadAulas();
       setShowEditDialog(false);
       setAulaToEdit(null);
@@ -307,6 +371,7 @@ const CronogramaPage = ({ onNavigateHome }) => {
       alert('Erro ao atualizar aula: ' + error.message);
     }
   };
+
 
   if (loading) {
     return (
