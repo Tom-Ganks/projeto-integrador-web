@@ -14,6 +14,10 @@ const CadastroDeTurma = ({ onNavigateHome }) => {
   const [cursos, setCursos] = useState([]);
   const [turnos, setTurnos] = useState([]);
 
+  // Add these state variables near the other useState declarations in CadastroDeTurma
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [turmaToDelete, setTurmaToDelete] = useState(null);
+
   useEffect(() => {
     loadTurmas();
     loadSelects();
@@ -94,16 +98,19 @@ const CadastroDeTurma = ({ onNavigateHome }) => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const handleDelete = async (turma) => {
-    if (!window.confirm(`Tem certeza que deseja excluir a turma "${turma.turmanome}"?`)) {
-      return;
-    }
+  // Replace the existing handleDelete function with this one
+  const handleDelete = (turma) => {
+    setTurmaToDelete(turma);
+    setShowDeleteDialog(true);
+  };
 
+  // Add this new function
+  const confirmDelete = async () => {
     try {
       const { error } = await supabaseClient
         .from('turma')
         .delete()
-        .eq('idturma', turma.idturma);
+        .eq('idturma', turmaToDelete.idturma);
 
       if (error) throw error;
 
@@ -112,6 +119,9 @@ const CadastroDeTurma = ({ onNavigateHome }) => {
     } catch (error) {
       console.error('Erro ao excluir turma:', error);
       setErrorMessage(`Erro ao excluir turma: ${error.message}`);
+    } finally {
+      setShowDeleteDialog(false);
+      setTurmaToDelete(null);
     }
   };
 
@@ -199,9 +209,26 @@ const CadastroDeTurma = ({ onNavigateHome }) => {
           </ul>
         </div>
       </div>
-    </div>
-  );
-};
+
+      {showDeleteDialog && (
+      <div className="dialog-overlay" onClick={() => setShowDeleteDialog(false)}>
+        <div className="dialog-content" onClick={e => e.stopPropagation()}>
+          <div className="dialog-header">
+            <h2>Confirmar Exclusão</h2>
+          </div>
+          <div className="dialog-body">
+            <p>Tem certeza que deseja excluir esta turma?</p>
+            <p><strong>{turmaToDelete?.turmanome}</strong></p>
+          </div>
+          <div className="dialog-actions">
+            <button className="btn-secondary" onClick={() => setShowDeleteDialog(false)}>Cancelar</button>
+            <button className="btn-danger" onClick={confirmDelete}>Excluir</button>
+          </div>
+        </div>
+      </div>
+    )}
+  </div>
+)};
 
 /* Formulário de Turmas */
 const TurmaRegistrationForm = ({ onSubmit, initialData = null, onCancel = null, instrutores, cursos, turnos }) => {
@@ -209,9 +236,11 @@ const TurmaRegistrationForm = ({ onSubmit, initialData = null, onCancel = null, 
     turmanome: initialData?.turmanome || '',
     idinstrutor: initialData?.idinstrutor || '',
     idcurso: initialData?.idcurso || '',
+    courseName: initialData?.cursos?.nomecurso || '', // Add this line
     idturno: initialData?.idturno || ''
   });
 
+  const [showOptions, setShowOptions] = useState(false); // Add this line
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -301,20 +330,77 @@ const TurmaRegistrationForm = ({ onSubmit, initialData = null, onCancel = null, 
 
       <div className="form-group">
         <label htmlFor="idcurso" className="form-label"><BookOpen size={16} /> Curso</label>
-        <select
-          id="idcurso"
-          name="idcurso"
-          className={`form-input ${errors.idcurso ? 'error' : ''}`}
-          value={formData.idcurso}
-          onChange={handleChange}
-        >
-          <option value="">Selecione...</option>
-          {cursos.map((c) => (
-            <option key={c.idcurso} value={c.idcurso}>
-              {c.nomecurso}
-            </option>
-          ))}
-        </select>
+        <div style={{ position: 'relative' }}>
+          <input
+            type="text"
+            id="courseName"
+            name="courseName"
+            className={`form-input ${errors.idcurso ? 'error' : ''}`}
+            value={formData.courseName}
+            onChange={(e) => {
+              setFormData(prev => ({
+                ...prev,
+                courseName: e.target.value,
+                idcurso: ''
+              }));
+              setShowOptions(true);
+            }}
+            onFocus={() => setShowOptions(true)}
+            onBlur={() => {
+              // Delay hiding to allow click on options
+              setTimeout(() => setShowOptions(false), 200);
+            }}
+            placeholder="Digite o nome do curso"
+          />
+          
+          {showOptions && (
+            <ul
+              style={{
+                position: 'absolute',
+                zIndex: 10,
+                background: '#fff',
+                border: '1px solid #ccc',
+                width: '100%',
+                maxHeight: '180px',
+                overflowY: 'auto',
+                borderRadius: '6px',
+                marginTop: '4px',
+                listStyle: 'none',
+                padding: 0,
+              }}
+            >
+              {cursos
+                .filter(c =>
+                  c.nomecurso
+                    .toLowerCase()
+                    .startsWith(formData.courseName.toLowerCase())
+                )
+                .map((curso) => (
+                  <li
+                    key={curso.idcurso}
+                    onClick={() => {
+                      setFormData(prev => ({
+                        ...prev,
+                        courseName: curso.nomecurso,
+                        idcurso: curso.idcurso.toString()
+                      }));
+                      setShowOptions(false);
+                    }}
+                    style={{
+                      padding: '6px 10px',
+                      cursor: 'pointer',
+                      borderBottom: '1px solid #eee',
+                      background:
+                        curso.nomecurso === formData.courseName ? '#f0f0f0' : 'white',
+                    }}
+                    onMouseDown={(e) => e.preventDefault()}
+                  >
+                    {curso.nomecurso}
+                  </li>
+                ))}
+            </ul>
+          )}
+        </div>
         {errors.idcurso && <div className="error-message">{errors.idcurso}</div>}
       </div>
 
