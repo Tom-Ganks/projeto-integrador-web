@@ -3,7 +3,10 @@ import { ArrowLeft, Calendar, Printer, Plus } from 'lucide-react';
 import { supabaseClient } from '../../services/supabase.js';
 import FeriadosDialog from '../../widgets/FeriadosDialog.jsx';
 import AdicionarAulaDialog from '../../widgets/AdicionarAulaDialog.jsx';
+import PrintSchedule from '../../components/PrintSchedule.jsx'
+import '../../styles/print-schedule.css';
 import '../../styles/cronograma.css';
+
 
 const CronogramaPage = ({ onNavigateHome }) => {
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -23,6 +26,7 @@ const CronogramaPage = ({ onNavigateHome }) => {
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [aulaToEdit, setAulaToEdit] = useState(null);
   const [showConflitoDialog, setShowConflitoDialog] = useState(false);
+  const [showPrintView, setShowPrintView] = useState(false);
   const [aulaConflitante, setAulaConflitante] = useState(null);
   const [novaAulaTentada, setNovaAulaTentada] = useState(null);
 
@@ -403,8 +407,14 @@ const CronogramaPage = ({ onNavigateHome }) => {
           </button>
           <button
             className="action-button"
-            onClick={() => window.print()}
-            title="Imprimir"
+            onClick={() => {
+              if (!selectedTurmaId) {
+                alert('Selecione uma turma antes de imprimir.');
+                return;
+              }
+              setShowPrintView(true);
+            }}
+            title="Imprimir Cronograma"
           >
             <Printer size={20} />
           </button>
@@ -700,9 +710,69 @@ const CronogramaPage = ({ onNavigateHome }) => {
           </div>
         </div>
       )}
+
+      {showPrintView && (
+        <div
+          className="print-overlay"
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            width: '100vw',
+            height: '100vh',
+            background: 'white',
+            zIndex: 99999,
+            overflow: 'auto',
+            display: 'block'
+          }}
+        >
+          <button
+            onClick={() => setShowPrintView(false)}
+            className="no-print"
+            style={{
+              position: 'fixed',
+              top: 10,
+              right: 10,
+              background: '#dc3545',
+              color: '#fff',
+              border: 'none',
+              padding: '8px 12px',
+              borderRadius: '4px',
+              cursor: 'pointer',
+              zIndex: 100000
+            }}
+          >
+            Fechar
+          </button>
+
+          <div style={{ padding: '50px 20px 20px 20px', width: '100%', boxSizing: 'border-box' }}>
+            {selectedTurmaId ? (
+              <PrintSchedule
+                turmaId={selectedTurmaId}
+                monthDate={currentDate}
+                onReady={() => {
+                  requestAnimationFrame(() => {
+                    setTimeout(() => {
+                      window.print();
+                    }, 700);
+                  });
+                }}
+              />
+            ) : (
+              <div style={{ padding: 24 }}>
+                <strong>Selecione uma turma antes de imprimir.</strong>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 };
+
+// =========================
+// COMPONENTE DE EDIÇÃO DE AULA
+// =========================
 
 const EditAulaForm = ({ aula, onSubmit, onCancel }) => {
   const [formData, setFormData] = useState({
@@ -763,6 +833,8 @@ const EditAulaForm = ({ aula, onSubmit, onCancel }) => {
       <div className="form-group">
         <label>Horas: (máx. {getMaxHoras()}h)</label>
         <input
+          id="horas"
+          name="horas"
           type="number"
           min="1"
           max={getMaxHoras()}
@@ -770,7 +842,8 @@ const EditAulaForm = ({ aula, onSubmit, onCancel }) => {
           onChange={handleHorasChange}
           onInput={(e) => {
             const max = getMaxHoras();
-            if (parseInt(e.target.value) > max) {
+            const value = parseInt(e.target.value);
+            if (value > max) {
               e.target.value = max;
               setFormData({ ...formData, horas: max });
             }
