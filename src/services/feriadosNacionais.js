@@ -1,5 +1,5 @@
 // Feriados Nacionais do Brasil
-// Calcula feriados fixos e móveis para os próximos anos
+// Inclui feriados fixos e móveis (Páscoa, Carnaval, Corpus Christi)
 
 const calcularPascoa = (ano) => {
   const a = ano % 19;
@@ -26,37 +26,38 @@ export const getFeriadosNacionais = () => {
 
   // Gera feriados para os próximos 5 anos
   for (let ano = anoAtual; ano <= anoAtual + 5; ano++) {
-    // Feriados fixos
-    feriados[`${ano}-0-1`] = '🎉 Ano Novo';
-    feriados[`${ano}-3-21`] = '🎖 Tiradentes';
-    feriados[`${ano}-4-1`] = '👷 Dia do Trabalho';
-    feriados[`${ano}-8-7`] = '🇧🇷 Independência do Brasil';
-    feriados[`${ano}-9-12`] = '🙏 Nossa Senhora Aparecida';
-    feriados[`${ano}-10-2`] = '🕯 Finados';
-    feriados[`${ano}-10-15`] = '🏛 Proclamação da República';
-    feriados[`${ano}-11-25`] = '🎄 Natal';
+    // 🔹 Feriados fixos (formato YYYY-MM-DD)
+    feriados[`${ano}-01-01`] = '🎉 Ano Novo';
+    feriados[`${ano}-04-21`] = '🎖 Tiradentes';
+    feriados[`${ano}-05-01`] = '👷 Dia do Trabalho';
+    feriados[`${ano}-09-07`] = '🇧🇷 Independência do Brasil';
+    feriados[`${ano}-10-12`] = '🙏 Nossa Senhora Aparecida';
+    feriados[`${ano}-11-02`] = '🕯 Finados';
+    feriados[`${ano}-11-15`] = '🏛 Proclamação da República';
+    feriados[`${ano}-11-20`] = '✊🏿 Dia Nacional de Zumbi e da Consciência Negra';
+    feriados[`${ano}-12-25`] = '🎄 Natal';
 
-    // Feriados móveis baseados na Páscoa
+    // 🔹 Feriados móveis baseados na Páscoa
     const pascoa = calcularPascoa(ano);
-    const pascoacKey = `${pascoa.getFullYear()}-${pascoa.getMonth()}-${pascoa.getDate()}`;
-    feriados[pascoacKey] = '🐣 Páscoa';
+    const pascoaKey = `${ano}-${String(pascoa.getMonth() + 1).padStart(2, '0')}-${String(pascoa.getDate()).padStart(2, '0')}`;
+    feriados[pascoaKey] = '🐣 Páscoa';
 
-    // Sexta-feira Santa (2 dias antes da Páscoa)
+    // Sexta-feira Santa (2 dias antes)
     const sextaSanta = new Date(pascoa);
     sextaSanta.setDate(pascoa.getDate() - 2);
-    const sextaKey = `${sextaSanta.getFullYear()}-${sextaSanta.getMonth()}-${sextaSanta.getDate()}`;
+    const sextaKey = `${ano}-${String(sextaSanta.getMonth() + 1).padStart(2, '0')}-${String(sextaSanta.getDate()).padStart(2, '0')}`;
     feriados[sextaKey] = '✝ Sexta-feira Santa';
 
-    // Carnaval (47 dias antes da Páscoa)
+    // Carnaval (47 dias antes)
     const carnaval = new Date(pascoa);
     carnaval.setDate(pascoa.getDate() - 47);
-    const carnavalKey = `${carnaval.getFullYear()}-${carnaval.getMonth()}-${carnaval.getDate()}`;
+    const carnavalKey = `${ano}-${String(carnaval.getMonth() + 1).padStart(2, '0')}-${String(carnaval.getDate()).padStart(2, '0')}`;
     feriados[carnavalKey] = '🎭 Carnaval';
 
-    // Corpus Christi (60 dias depois da Páscoa)
-    const corpusChristi = new Date(pascoa);
-    corpusChristi.setDate(pascoa.getDate() + 60);
-    const corpusKey = `${corpusChristi.getFullYear()}-${corpusChristi.getMonth()}-${corpusChristi.getDate()}`;
+    // Corpus Christi (60 dias depois)
+    const corpus = new Date(pascoa);
+    corpus.setDate(pascoa.getDate() + 60);
+    const corpusKey = `${ano}-${String(corpus.getMonth() + 1).padStart(2, '0')}-${String(corpus.getDate()).padStart(2, '0')}`;
     feriados[corpusKey] = '🍞 Corpus Christi';
   }
 
