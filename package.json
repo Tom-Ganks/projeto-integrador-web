@@ -1,7 +1,7 @@
 {
   "name": "web-integrador-crono",
   "version": "0.1.0",
-  "homepage": "https://tom-ganks.github.io/projeto-integrador-web/",
+  "homepage": ".",
   "private": true,
   "dependencies": {
     "@supabase/supabase-js": "^2.55.0",
