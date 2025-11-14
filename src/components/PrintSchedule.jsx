@@ -206,7 +206,7 @@ const PrintSchedule = ({ turmaId, monthDate, onReady }) => {
         {/* Cabeçalho */}
         <div className="print-header">
           <div className="logo-section">
-            <img src="/senac.png" alt="SENAC" className="logo" />
+            <img src={`${process.env.PUBLIC_URL}/senac.png`} alt="SENAC" className="logo" />
           </div>
           <div className="header-info">
             <h1>SENAC CATALÃO</h1>
