@@ -34,6 +34,7 @@ export const getFeriadosNacionais = () => {
     feriados[`${ano}-9-12`] = '🙏 Nossa Senhora Aparecida';
     feriados[`${ano}-10-2`] = '🕯 Finados';
     feriados[`${ano}-10-15`] = '🏛 Proclamação da República';
+    feriados[`${ano}-11-20`] = '✊🏿 Dia Nacional de Zumbi e da Consciência Negra';
     feriados[`${ano}-11-25`] = '🎄 Natal';
 
     // Feriados móveis baseados na Páscoa
