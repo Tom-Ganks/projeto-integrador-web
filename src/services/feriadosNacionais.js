@@ -1,4 +1,4 @@
-// Feriados Nacionais do Brasil
+// Feriados Nacionais do Brasil - VERSÃO CORRIGIDA
 // Inclui feriados fixos e móveis (Páscoa, Carnaval, Corpus Christi)
 
 const calcularPascoa = (ano) => {
@@ -20,48 +20,61 @@ const calcularPascoa = (ano) => {
   return new Date(ano, mes - 1, dia);
 };
 
+// Função auxiliar para formatar data no padrão brasileiro
+const formatarDataBrasileira = (data) => {
+  const dia = String(data.getDate()).padStart(2, '0');
+  const mes = String(data.getMonth() + 1).padStart(2, '0');
+  const ano = data.getFullYear();
+  return `${dia}/${mes}/${ano}`;
+};
+
 export const getFeriadosNacionais = () => {
   const feriados = {};
   const anoAtual = new Date().getFullYear();
 
   // Gera feriados para os próximos 5 anos
   for (let ano = anoAtual; ano <= anoAtual + 5; ano++) {
-    // 🔹 Feriados fixos (formato YYYY-MM-DD)
-    feriados[`${ano}-01-01`] = '🎉 Ano Novo';
-    feriados[`${ano}-04-21`] = '🎖 Tiradentes';
-    feriados[`${ano}-05-01`] = '👷 Dia do Trabalho';
-    feriados[`${ano}-09-07`] = '🇧🇷 Independência do Brasil';
-    feriados[`${ano}-10-12`] = '🙏 Nossa Senhora Aparecida';
-    feriados[`${ano}-11-02`] = '🕯 Finados';
-    feriados[`${ano}-11-15`] = '🏛 Proclamação da República';
-    feriados[`${ano}-11-20`] = '✊🏿 Dia Nacional de Zumbi e da Consciência Negra';
-    feriados[`${ano}-12-25`] = '🎄 Natal';
+    // 🔹 Feriados fixos (formato DD/MM/YYYY - PADRÃO BRASIL)
+    feriados[`01/01/${ano}`] = '🎉 Ano Novo';
+    feriados[`21/04/${ano}`] = '🎖 Tiradentes';
+    feriados[`01/05/${ano}`] = '👷 Dia do Trabalho';
+    feriados[`07/09/${ano}`] = '🇧🇷 Independência do Brasil';
+    feriados[`12/10/${ano}`] = '🙏 Nossa Senhora Aparecida';
+    feriados[`02/11/${ano}`] = '🕯 Finados';
+    feriados[`15/11/${ano}`] = '🏛 Proclamação da República';
+    feriados[`20/11/${ano}`] = '✊🏿 Dia Nacional de Zumbi e da Consciência Negra';
+    feriados[`25/12/${ano}`] = '🎄 Natal';
 
     // 🔹 Feriados móveis baseados na Páscoa
     const pascoa = calcularPascoa(ano);
-    const pascoaKey = `${ano}-${String(pascoa.getMonth() + 1).padStart(2, '0')}-${String(pascoa.getDate()).padStart(2, '0')}`;
+    const pascoaKey = formatarDataBrasileira(pascoa);
     feriados[pascoaKey] = '🐣 Páscoa';
 
     // Sexta-feira Santa (2 dias antes)
     const sextaSanta = new Date(pascoa);
     sextaSanta.setDate(pascoa.getDate() - 2);
-    const sextaKey = `${ano}-${String(sextaSanta.getMonth() + 1).padStart(2, '0')}-${String(sextaSanta.getDate()).padStart(2, '0')}`;
+    const sextaKey = formatarDataBrasileira(sextaSanta);
     feriados[sextaKey] = '✝ Sexta-feira Santa';
 
     // Carnaval (47 dias antes)
     const carnaval = new Date(pascoa);
     carnaval.setDate(pascoa.getDate() - 47);
-    const carnavalKey = `${ano}-${String(carnaval.getMonth() + 1).padStart(2, '0')}-${String(carnaval.getDate()).padStart(2, '0')}`;
+    const carnavalKey = formatarDataBrasileira(carnaval);
     feriados[carnavalKey] = '🎭 Carnaval';
 
     // Corpus Christi (60 dias depois)
     const corpus = new Date(pascoa);
     corpus.setDate(pascoa.getDate() + 60);
-    const corpusKey = `${ano}-${String(corpus.getMonth() + 1).padStart(2, '0')}-${String(corpus.getDate()).padStart(2, '0')}`;
+    const corpusKey = formatarDataBrasileira(corpus);
     feriados[corpusKey] = '🍞 Corpus Christi';
   }
 
   return feriados;
 };
+
+// Exemplo de uso:
+// const feriados = getFeriadosNacionais();
+// console.log(feriados['25/12/2024']); // 🎄 Natal
+// console.log(feriados['01/01/2025']); // 🎉 Ano Novo
 
 export default getFeriadosNacionais;
