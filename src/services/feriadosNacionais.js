@@ -24,18 +24,18 @@ export const getFeriadosNacionais = () => {
   const feriados = {};
   const anoAtual = new Date().getFullYear();
 
-  // Gera feriados para os próximos 5 anos
+ // Gera feriados para os próximos 5 anos
   for (let ano = anoAtual; ano <= anoAtual + 5; ano++) {
-    // Feriados fixos
-    feriados[`${ano}-0-1`] = '🎉 Ano Novo';
-    feriados[`${ano}-3-21`] = '🎖 Tiradentes';
-    feriados[`${ano}-4-1`] = '👷 Dia do Trabalho';
-    feriados[`${ano}-8-7`] = '🇧🇷 Independência do Brasil';
-    feriados[`${ano}-9-12`] = '🙏 Nossa Senhora Aparecida';
-    feriados[`${ano}-10-2`] = '🕯 Finados';
-    feriados[`${ano}-10-15`] = '🏛 Proclamação da República';
-    feriados[`${ano}-11-20`] = '✊🏿 Dia Nacional de Zumbi e da Consciência Negra';
-    feriados[`${ano}-11-25`] = '🎄 Natal';
+    // 🔹 Feriados fixos (formato DD/MM/YYYY - PADRÃO BRASIL)
+    feriados[`01/01/${ano}`] = '🎉 Ano Novo';
+    feriados[`21/04/${ano}`] = '🎖 Tiradentes';
+    feriados[`01/05/${ano}`] = '👷 Dia do Trabalho';
+    feriados[`07/09/${ano}`] = '🇧🇷 Independência do Brasil';
+    feriados[`12/10/${ano}`] = '🙏 Nossa Senhora Aparecida';
+    feriados[`02/11/${ano}`] = '🕯 Finados';
+    feriados[`15/11/${ano}`] = '🏛 Proclamação da República';
+    feriados[`20/11/${ano}`] = '✊🏿 Dia Nacional de Zumbi e da Consciência Negra';
+    feriados[`25/12/${ano}`] = '🎄 Natal';
 
     // Feriados móveis baseados na Páscoa
     const pascoa = calcularPascoa(ano);
